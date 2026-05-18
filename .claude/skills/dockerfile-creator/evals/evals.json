@@ -1,0 +1,124 @@
+{
+  "skill_name": "dockerfile-creator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "preciso de um Dockerfile pra esse projeto aqui, nunca mexi com Docker antes",
+      "expected_output": "Detecta Node.js via src/package.json, gera Dockerfile single-stage com node:20-slim (ou versão atual), usuário não-root, copy package.json primeiro, npm ci, copy src depois. Gera .dockerignore incluindo node_modules. Mostra rascunho no chat antes de salvar. Propõe salvar em src/.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "usa-imagem-slim-ou-alpine-nao-latest",
+          "description": "Dockerfile usa tag específica na imagem base (ex: node:20-slim), nunca 'latest'",
+          "check": "Dockerfile FROM line contains a specific version tag (e.g., node:20-slim, node:22-slim) and does NOT contain 'latest'"
+        },
+        {
+          "name": "single-stage-para-nodejs",
+          "description": "Node.js deve ser single-stage — sem FROM múltiplos",
+          "check": "Dockerfile contains exactly ONE FROM instruction"
+        },
+        {
+          "name": "dependency-layer-antes-do-source",
+          "description": "package.json é copiado antes do restante do código fonte",
+          "check": "In Dockerfile, COPY of package.json (or package*.json) appears before COPY of the full source code"
+        },
+        {
+          "name": "usa-npm-ci-nao-npm-install",
+          "description": "usa npm ci para instalação determinística em produção",
+          "check": "Dockerfile contains 'npm ci' rather than 'npm install'"
+        },
+        {
+          "name": "usuario-nao-root",
+          "description": "Cria e usa usuário não-root antes do CMD",
+          "check": "Dockerfile contains USER instruction that switches to a non-root user"
+        },
+        {
+          "name": "dockerignore-tem-node-modules",
+          "description": ".dockerignore contém node_modules",
+          "check": ".dockerignore file contains 'node_modules' entry"
+        },
+        {
+          "name": "dockerignore-tem-env",
+          "description": ".dockerignore exclui .env para não vazar segredos",
+          "check": ".dockerignore file contains '.env' entry"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "quero containerizar minha api go, pode gerar o dockerfile?",
+      "expected_output": "Detecta Go via go.mod, gera Dockerfile multi-stage (builder com golang:X.Y + runtime com scratch ou alpine), binário compilado estático, usuário não-root no stage final. Gera .dockerignore adequado para Go. Mostra rascunho antes de salvar.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "usa-multistage-para-go",
+          "description": "Go deve usar multi-stage build para imagem final enxuta",
+          "check": "Dockerfile contains at least TWO FROM instructions (multi-stage build)"
+        },
+        {
+          "name": "stage-builder-usa-golang",
+          "description": "Stage de build usa imagem golang oficial com versão específica",
+          "check": "First FROM in Dockerfile uses golang: image with a specific version tag (not latest)"
+        },
+        {
+          "name": "stage-final-usa-scratch-ou-alpine",
+          "description": "Stage final usa scratch ou alpine para imagem mínima",
+          "check": "Last FROM in Dockerfile uses 'scratch', 'alpine', or 'distroless' as base"
+        },
+        {
+          "name": "usuario-nao-root-go",
+          "description": "Stage final define e usa usuário não-root",
+          "check": "Dockerfile contains USER instruction in the final stage"
+        },
+        {
+          "name": "dockerignore-go-vendor-ou-bin",
+          "description": ".dockerignore exclui artefatos de build locais",
+          "check": ".dockerignore contains entries relevant to Go (e.g., vendor/, *.exe, bin/)"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "cria um dockerfile para o projeto python que tenho aqui, o requirements.txt tá na raiz",
+      "expected_output": "Detecta Python via requirements.txt na raiz, gera single-stage com python:3.X-slim, copia requirements.txt primeiro, pip install --no-cache-dir, copia fonte depois, usuário não-root. .dockerignore inclui __pycache__, *.pyc, .venv. Salva na raiz.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "usa-imagem-python-slim",
+          "description": "Usa python:X.Y-slim com versão específica, não latest",
+          "check": "Dockerfile FROM uses python: image with a specific version and -slim suffix (e.g., python:3.12-slim)"
+        },
+        {
+          "name": "single-stage-para-python",
+          "description": "Python deve ser single-stage",
+          "check": "Dockerfile contains exactly ONE FROM instruction"
+        },
+        {
+          "name": "requirements-antes-do-source",
+          "description": "requirements.txt é copiado antes do restante do código",
+          "check": "COPY of requirements.txt appears before COPY of full source in Dockerfile"
+        },
+        {
+          "name": "pip-no-cache-dir",
+          "description": "pip install usa --no-cache-dir para imagem menor",
+          "check": "Dockerfile pip install command includes '--no-cache-dir' flag"
+        },
+        {
+          "name": "usuario-nao-root-python",
+          "description": "Cria e usa usuário não-root antes do CMD",
+          "check": "Dockerfile contains USER instruction switching to non-root user"
+        },
+        {
+          "name": "dockerignore-pycache",
+          "description": ".dockerignore exclui __pycache__ e arquivos .pyc",
+          "check": ".dockerignore contains '__pycache__' and '*.pyc' entries"
+        },
+        {
+          "name": "dockerignore-venv",
+          "description": ".dockerignore exclui virtualenv local",
+          "check": ".dockerignore contains '.venv' or 'venv/' entry"
+        }
+      ]
+    }
+  ]
+}
